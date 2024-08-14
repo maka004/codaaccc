@@ -33,10 +33,9 @@ def hello():
     return "Hello"
 
 
-
 from fastapi import FastAPI, HTTPException
-import requests
 from moviepy.editor import VideoFileClip
+import urllib.request
 from io import BytesIO
 
 app = FastAPI()
@@ -44,16 +43,11 @@ app = FastAPI()
 @app.post("/video-length/")
 async def get_video_length(video_url: str):
     try:
-        # Fetch the video file from the provided URL
-        response = requests.get(video_url)
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=404, detail="Video not found")
+        # Download the video file from the provided URL
+        with urllib.request.urlopen(video_url) as response:
+            video_bytes = BytesIO(response.read())
 
-        # Load the video into memory
-        video_bytes = BytesIO(response.content)
-        
-        # Use moviepy to read the video and get the duration
+        # Use moviepy to load the video and get the duration
         clip = VideoFileClip(video_bytes)
         duration = clip.duration  # Duration in seconds
 
@@ -62,5 +56,5 @@ async def get_video_length(video_url: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# To run the FastAPI app, use the following command:
-# uvicorn filename:app --reload
+# If you're running the app locally, use this command:
+# uvicorn main:app --host 0.0.0.0 --port 8000 --reload
